@@ -32,6 +32,13 @@ class Image2Helper extends Helper {
                 $types = array(1 => "gif", "jpeg", "png", "swf", "psd", "wbmp"); // used to determine image type
                 // if(empty($htmlAttributes['alt'])) $htmlAttributes['alt'] = 'thumb';  // Ponemos alt default
 
+                // sitex
+                $id = '';
+                if (strpos($path, '/uploads/source/') === 0) {
+                        preg_match('|[0-9]+|',$path,$matches);
+                        $id = $matches[0];
+                }
+
                 $uploadsDir = 'uploads';
 
                 $fullpath = WWW_ROOT.$uploadsDir.DS; // $fullpath = ROOT.DS.APP_DIR.DS.WEBROOT_DIR.DS.$uploadsDir.DS;
@@ -136,8 +143,10 @@ class Image2Helper extends Helper {
 
                 }
 
-                $relfile = '/'.$uploadsDir.'/'.$this->cacheDir.'/'.$method_short.'_'.$width.'x'.$height.'_'.basename($path); // relative file
-                $cachefile = $fullpath.$this->cacheDir.DS.$method_short.'_'.$width.'x'.$height.'_'.basename($path);  // location on server
+                // sitex 12 03 2013
+                $bn_path = end(explode('/', $path));
+                $relfile = '/' . $uploadsDir . '/' . $this->cacheDir . '/' . $id . '_' . $method_short . '_' . $width . 'x' . $height . '_' . $bn_path; // relative file
+                $cachefile = $fullpath . $this->cacheDir . DS . $id . '_' . $method_short . '_' . $width . 'x' . $height . '_' . $bn_path;  // location on server
 
                 if (file_exists($cachefile)) {
                         $csize = getimagesize($cachefile);
