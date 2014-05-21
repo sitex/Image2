@@ -144,7 +144,8 @@ class Image2Helper extends Helper {
                 }
 
                 // sitex 12 03 2013
-                $bn_path = end(explode('/', $path));
+                $path_array = explode('/', $path);
+                $bn_path = end($path_array);
                 $relfile = '/' . $uploadsDir . '/' . $this->cacheDir . '/' . $id . '_' . $method_short . '_' . $width . 'x' . $height . '_' . $bn_path; // relative file
                 $cachefile = $fullpath . $this->cacheDir . DS . $id . '_' . $method_short . '_' . $width . 'x' . $height . '_' . $bn_path;  // location on server
 
