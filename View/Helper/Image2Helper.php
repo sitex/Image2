@@ -48,6 +48,10 @@ class Image2Helper extends Helper {
                         $url = $server_path;
                 }
 
+                // sitex - check size
+                if ($method == 'resizeHeight') {
+                        $width = $height;
+                }
                 // sitex - check file
                 if (!file_exists($url)) {
                 	if ($return_path) {
@@ -58,42 +62,55 @@ class Image2Helper extends Helper {
 			return $return;
                 }
 
-                if (!($size = getimagesize($url))) // $size[0]:width, [1]:height, [2]:type
+                if (!($size = getimagesize($url))) // [0]:width, [1]:height, [2]:type
                         return; // image doesn't exist
 
+                $ex_width  = $size[0];
+                $ex_height = $size[1];
 
                 switch ($method) {
 
                         case "resizeRatio":
-                                if (($size[1]/$height) > ($size[0]/$width))  {
-                                        $width = ceil(($size[0]/$size[1]) * $height);
+                                if (($ex_height/$height) > ($ex_width/$width))  {
+                                        $width = ceil(($ex_width/$ex_height) * $height);
                                 } else {
-                                        $height = ceil($width / ($size[0]/$size[1]));
+                                        $height = ceil($width / ($ex_width/$ex_height));
                                 }
                                 $start_x = 0;
                                 $start_y = 0;
                                 $method_short = 'rr';
                                 break;
 
-				case "resizeWidth":
-					$test = ceil($width / ($size[0]/$size[1]));
-					$start_x = 0;
-					$start_y = 0;
-					// minheight
-					if ($test < $width) {
-						$ratio_x = $width / $size[0];
-						$ratio_y = $height / $size[1];
+                                case "resizeWidth":
+                                        // height undefined
+                                        $test = ceil($width / ($ex_width/$ex_height));
+                                        $start_x = 0;
+                                        $start_y = 0;
 
-						$start_x = round(($size[0] - ($width / $ratio_y)) / 2);
-						$start_y = 0;
-						$size[0] = round($width / $ratio_y);
+                                        if ($test < $width) {
+                                                $ratio_x = $width / $ex_width;
+                                                $ratio_y = $height / $ex_height;
 
-						$height = $width;
-					} else {
-						$height = $test;
-					}
-					$method_short = 'rw';
-					$htmlAttributes = compact('width','height');
+                                                $start_x = round(($ex_width - ($width / $ratio_y)) / 2);
+                                                $start_y = 0;
+                                                $ex_width = round($width / $ratio_y);
+
+                                                $height = $width;
+                                        } else {
+                                                $height = $test;
+                                        }
+                                        $method_short = 'rw';
+                                        $htmlAttributes = compact('width','height');
+                                break;
+
+                                case "resizeHeight":
+                                        // width undefined
+                                        $width = ceil(($ex_width/$ex_height) * $height);
+                                        $start_x = 0;
+                                        $start_y = 0;
+
+                                        $method_short = 'rh';
+                                        $htmlAttributes = compact('width','height');
                                 break;
 
                         case "resize":
@@ -103,40 +120,40 @@ class Image2Helper extends Helper {
                                 break;
 
                         case "resizeCrop":
-                                $ratio_x = $width / $size[0];
-                                $ratio_y = $height / $size[1];
+                                $ratio_x = $width / $ex_width;
+                                $ratio_y = $height / $ex_height;
                                 if (($ratio_y) > ($ratio_x))  {
-                                        $start_x = round(($size[0] - ($width / $ratio_y)) / 2);
+                                        $start_x = round(($ex_width - ($width / $ratio_y)) / 2);
                                         $start_y = 0;
-                                        $size[0] = round($width / $ratio_y);
+                                        $ex_width = round($width / $ratio_y);
                                 } else {
                                         $start_x = 0;
-                                        $start_y = round(($size[1] - ($height / $ratio_x)) / 2);
-                                        $size[1] = round($height / $ratio_x);
+                                        $start_y = round(($ex_height - ($height / $ratio_x)) / 2);
+                                        $ex_height = round($height / $ratio_x);
                                 }
                                 $method_short = 'rc';
                                 break;
 
                         case "resizeCropTop":
-                                $ratio_x = $width / $size[0];
-                                $ratio_y = $height / $size[1];
+                                $ratio_x = $width / $ex_width;
+                                $ratio_y = $height / $ex_height;
                                 if (($ratio_y) > ($ratio_x))  {
-                                        $start_x = round(($size[0] - ($width / $ratio_y)) / 2);
+                                        $start_x = round(($ex_width - ($width / $ratio_y)) / 2);
                                         $start_y = 0;
-                                        $size[0] = round($width / $ratio_y);
+                                        $ex_width = round($width / $ratio_y);
                                 } else {
                                         $start_x = 0;
                                         $start_y = 0;
-                                        $size[1] = round($height / $ratio_x);
+                                        $ex_height = round($height / $ratio_x);
                                 }
                                 $method_short = 'rct';
                                 break;
 
                         case "crop":
-                                $start_x = ($size[0] - $width) / 2;
-                                $start_y = ($size[1] - $height) / 2;
-                                $size[0] = $width;
-                                $size[1] = $height;
+                                $start_x = ($ex_width - $width) / 2;
+                                $start_y = ($ex_height - $height) / 2;
+                                $ex_width = $width;
+                                $ex_height = $height;
                                 $method_short = 'c';
                                 break;
 
@@ -170,10 +187,10 @@ class Image2Helper extends Helper {
 				imagefilledrectangle($temp, 0, 0, $width, $height, $transparent);
 
                                 // imagecolortransparent($temp, imagecolorallocate($temp, 0, 0, 0));
-                                imagecopyresampled ($temp, $image, 0, 0, $start_x, $start_y, $width, $height, $size[0], $size[1]);
+                                imagecopyresampled ($temp, $image, 0, 0, $start_x, $start_y, $width, $height, $ex_width, $ex_height);
                         } else {
                                 $temp = imagecreate ($width, $height);
-                                imagecopyresized ($temp, $image, 0, 0, $start_x, $start_y, $width, $height, $size[0], $size[1]);
+                                imagecopyresized ($temp, $image, 0, 0, $start_x, $start_y, $width, $height, $ex_width, $ex_height);
                         }
                         $quality = ($types[$size[2]] == 'png') ? 9 : 90;			// sitex
                         call_user_func("image".$types[$size[2]], $temp, $cachefile, $quality);	// sitex 06062013 JpegQuality
